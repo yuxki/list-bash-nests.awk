@@ -8,6 +8,7 @@ jobs:
           name: Install gawk and git
           command: |
             apt update && apt -y install gawk
+      - checkout
       - run:
           name: Run Unit Tests
           command: |
