@@ -25,7 +25,7 @@
 #           - Output the list and sort by "Opening NR" and "Opening RSTART"
 #             - gawk -f list-bash-nests.awk bar.sh | sort -t, -k 4,4n -k 5,5n
 #
-# Version: 0.1.0
+# Version: 0.2.0
 # Author: yuxki
 # Repository: https://github.com/yuxki/list-bash-nests
 # Last Change: 2022/7/7
