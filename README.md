@@ -7,7 +7,7 @@ Analyze nests of provided bash script, and list that with the comma delimited fo
     - Bash script
   - Output
     - Comma delimited format
-      - Depth,Type,FuncName*,Opening- NR,Opening-RSTART,Closing-NR,Closing-RSTART
+      - Depth,Type,FuncName*,Opening-NR,Opening-RSTART,Closing-NR,Closing-RSTART
         * If type is not "Function", this column will be empty.
     - Example
       - 0,fu,abc,3,1,17,1
@@ -20,6 +20,7 @@ Analyze nests of provided bash script, and list that with the comma delimited fo
     - Back Quotes            bq              ``
     - Escaped Back Quotes    eb              \`\`
     - Command Substitution   cs              $()
+    - Substitution           su              ${}
   - Usage
     - Output the list and sort by "Opening NR" and "Opening RSTART"
       - gawk -f list-bash-nests.awk bar.sh | sort -t, -k 4,4n -k 5,5
@@ -68,6 +69,7 @@ ghi
 5,sq,,7,13,7,17
 5,dq,,7,19,7,22
 5,dq,,7,24,7,31
+6,su,,7,25,7,30
 3,bq,,8,5,8,31
 4,cs,,8,11,8,30
 5,eb,,8,18,8,29
