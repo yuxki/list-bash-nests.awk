@@ -1,0 +1,17 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run:
+          name: Install gawk and git
+          command: |
+            apt -y install gawk
+      - run:
+          name: Run Unit Tests
+          command: |
+            ./tests/test.sh gawk
+            ./tests/test.sh nawk
+            ./tests/test.sh mawk
