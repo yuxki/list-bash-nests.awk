@@ -16,6 +16,7 @@ jobs:
       - run:
           name: Run Unit Tests
           command: |
+            ls -a
             ./tests/test.sh gawk
             ./tests/test.sh nawk
             ./tests/test.sh mawk
