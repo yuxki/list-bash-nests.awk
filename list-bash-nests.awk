@@ -20,6 +20,7 @@
 #           - Back Quotes            bq              ``
 #           - Escaped Back Quotes    eb              \`\`
 #           - Command Substitution   cs              $()
+#           - Substitution           su              ${}
 #         - Usage
 #           - Output the list and sort by "Opening NR" and "Opening RSTART"
 #             - gawk -f list-bash-nests.awk bar.sh | sort -t, -k 4,4n -k 5,5n
@@ -60,10 +61,6 @@ BEGIN {
   remains = $0
   lineRStart = 0
 
-  # remove comment
-  if (match(remains, /[^${]#/))
-    remains = substr(remains, 1, RSTART-1)
-
   while (1){
     openRStart = 0; openRLength = 0; closeRStart = 0; closeRLength = 0;
     openReg = ""
@@ -74,10 +71,10 @@ BEGIN {
 
     # generate the regular expression that match a opening
     if (! isInCmd(stack, stackIdx)) {
-      openReg = "[_a-zA-z][_a-zA-z0-9]* *\\(\\) *{?|{|\"|'|`|\\$\\("
+      openReg = "[_a-zA-z][_a-zA-z0-9]* *\\(\\) *{?|\\${|{|\"|'|`|\\$\\("
     }
     else if (! isInSQuotes(stack, stackIdx)) {
-      openReg = "\\$\\(|`"
+      openReg = "\\$\\(|`|\\${"
       if (! isInDQuotes(stack, stackIdx)) openReg = openReg "|\"|'"
       if (isInBQuotes(stack, stackIdx)) openReg = openReg "|\\\\`"
     }
@@ -96,6 +93,17 @@ BEGIN {
         isConsumeOp = 1
       else
         isConsumeOp = 0
+    }
+
+    # skip this line if it remains only comment
+    if (! isInSQuotes(stack, stackIdx) &&
+        ! isInDQuotes(stack, stackIdx) &&
+        ! isInSub(stack, stackIdx))
+    {
+      if (match(remains, /[^$]#|^#/) && ! isEscaped(RSTART, remains)) {
+        if ((isConsumeOp && RSTART < openRStart) || (closeRStart && RSTART < closeRStart))
+          next
+      }
     }
 
     if (! (openRStart == 0 && closeRStart == 0)) {
@@ -146,7 +154,7 @@ END {
     print nestList[idx]
 }
 
-function isIn(stack, stackIdx, typeReg,     array) {
+function isInStack(stack, stackIdx, typeReg,     array) {
   for (i = 0; i < stackIdx; i++) {
     split(stack[i], array, ",")
     if (array[2] ~ "^" typeReg "$") {
@@ -156,18 +164,21 @@ function isIn(stack, stackIdx, typeReg,     array) {
   return 0
 }
 
-function isInCmd(stack, stackIdx) { return isIn(stack, stackIdx, "dq|sq|bq|cs") }
+function isInCmd(stack, stackIdx) { return isInStack(stack, stackIdx, "dq|sq|bq|cs") }
 
-function isInSQuotes(stack, stackIdx) { return isIn(stack, stackIdx, "sq") }
+function isInSQuotes(stack, stackIdx) { return isInStack(stack, stackIdx, "sq") }
 
-function isInBQuotes(stack, stackIdx) { return isIn(stack, stackIdx, "dq") }
+function isInBQuotes(stack, stackIdx) { return isInStack(stack, stackIdx, "dq") }
 
-function isInDQuotes(stack, stackIdx,    array) {
+function isOnStack(stack, stackIdx, type,    array) {
   split(stack[stackIdx - 1], array, ",")
-  if (array[2] == "dq")
+  if (array[2] == type)
     return 1
   return 0
 }
+
+function isInDQuotes(stack, stackIdx) { return isOnStack(stack, stackIdx, "dq") }
+function isInSub(stack, stackIdx) { return isOnStack(stack, stackIdx, "su") }
 
 function nestType(str) {
     if (str ==  "{")
@@ -182,6 +193,8 @@ function nestType(str) {
       return "bq"
     else if (str ==  "\\`")
       return "eb"
+    else if (str ==  "${")
+      return "su"
     else {
       if (str ~ /\(\)/)
         return "fu"
@@ -209,6 +222,8 @@ function closeReg(stack, stackIdx,    array, type) {
     return  "`"
   else if (type ==  "eb")
     return  "\\\\`"
+  else if (type ==  "su")
+    return  "}"
 
   print "ERROR: " array[2] " is undefined nest type"
   exit 1

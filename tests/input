@@ -25,3 +25,9 @@ abc() { # $("comment")
 abc
 def
 ghi
+# comment and "", ''
+' #' # ''
+" #
+" # ""
+${#} " "
+$#   " "
